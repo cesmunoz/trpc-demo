@@ -1,7 +1,7 @@
 import { createRouter } from "../context";
 
 const users = createRouter().query("list", {
-  resolve() {
+  resolve: () => {
     return [];
   },
 });
