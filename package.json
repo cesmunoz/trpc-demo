@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@heroicons/react": "^1.0.6",
     "@prisma/client": "^4.0.0",
     "@trpc/client": "^9.25.2",
     "@trpc/next": "^9.25.2",

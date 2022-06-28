@@ -1,16 +1,18 @@
-import { SetStateAction, useState } from "react";
+import { useState } from "react";
 import type { NextPage } from "next";
 import { trpc } from "../utils/trpc";
+import { TrashIcon } from "@heroicons/react/solid";
 
 const Home: NextPage = () => {
   const [todoText, setTodoText] = useState("");
   const utils = trpc.useContext();
   const response = trpc.useQuery(["todosList"]);
-  const addTodo = trpc.useMutation("todosCreate", {
-    async onSuccess() {
-      await utils.invalidateQueries(["todosList"]);
-    },
-  });
+
+  const onSuccess = async () => {
+    await utils.invalidateQueries(["todosList"]);
+  };
+  const addTodo = trpc.useMutation("todosCreate", { onSuccess });
+  const removeTodo = trpc.useMutation("todosRemove", { onSuccess });
 
   const handleOnChange = (e: any) => setTodoText(e.target.value);
 
@@ -22,6 +24,12 @@ const Home: NextPage = () => {
       completed: false,
     };
     await addTodo.mutateAsync(input);
+    setTodoText("")
+  };
+
+  const handleRemove = async (id: string) => {
+    const input = { id };
+    await removeTodo.mutateAsync(input);
   };
 
   return (
@@ -52,8 +60,12 @@ const Home: NextPage = () => {
               {response.data.map((todo) => (
                 <div
                   key={todo.id}
-                  className="p-2 mt-2 w-full bg-indigo-500 rounded text-white">
-                  {todo.title}
+                  className="flex p-2 mt-2 w-full bg-indigo-500 rounded text-white">
+                  <p className="grow">{todo.title}</p>
+                  <TrashIcon
+                    className="w-6 cursor-pointer"
+                    onClick={() => handleRemove(todo.id)}
+                  />
                 </div>
               ))}
             </>

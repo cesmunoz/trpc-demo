@@ -1,14 +1,17 @@
 import { z } from "zod";
+import prisma from "../../prisma";
 
 const schema = z.object({
-  title: z.string(),
+  id: z.string(),
 });
 
-const handler = ({ input }: any) => {
-  return {
-    id: "xxxx",
-    ...input,
-  };
+const handler = async ({ input }: any) => {
+  const result = await prisma.todo.delete({
+    where: {
+      id: input.id,
+    },
+  });
+  return result;
 };
 
 const endpointConfiguration = {

@@ -8,7 +8,6 @@ const schema = z.object({
   completed: z.boolean(),
 });
 
-
 const handler = async ({ input }: any) => {
   const post = await prisma.todo.create({
     data: input,
