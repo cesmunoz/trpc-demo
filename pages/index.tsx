@@ -1,10 +1,12 @@
 import { useState } from "react";
 import type { NextPage } from "next";
 import { trpc } from "../utils/trpc";
-import { TrashIcon } from "@heroicons/react/solid";
+import { TrashIcon, PencilIcon } from "@heroicons/react/solid";
+import TaskDialog from "./components/TaskDialog";
 
 const Home: NextPage = () => {
   const [todoText, setTodoText] = useState("");
+  const [selectedTask, setSelectedTask] = useState<null | any>(null);
   const utils = trpc.useContext();
   const response = trpc.useQuery(["todosList"]);
 
@@ -13,6 +15,7 @@ const Home: NextPage = () => {
   };
   const addTodo = trpc.useMutation("todosCreate", { onSuccess });
   const removeTodo = trpc.useMutation("todosRemove", { onSuccess });
+  const updateTodo = trpc.useMutation("todosUpdate", { onSuccess });
 
   const handleOnChange = (e: any) => setTodoText(e.target.value);
 
@@ -24,12 +27,38 @@ const Home: NextPage = () => {
       completed: false,
     };
     await addTodo.mutateAsync(input);
-    setTodoText("")
+    setTodoText("");
   };
 
   const handleRemove = async (id: string) => {
     const input = { id };
     await removeTodo.mutateAsync(input);
+  };
+
+  const handleSelect = async (id: string) => {
+    const task = response?.data?.find((todo) => todo.id === id);
+    setSelectedTask(task);
+  };
+
+  const handleOnClose = () => setSelectedTask(null);
+
+  const handleDueDate = (dueDate: Date, event: any) =>
+    setSelectedTask((prev: any) => ({ ...prev, dueDate }));
+
+  const handleFormOnChange = (e: any) => {
+    const { id, value, type, checked } = e.target;
+    setSelectedTask((prev: any) => ({
+      ...prev,
+      [id]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const handleUpdate = async (e: any) => {
+    e.preventDefault();
+
+    const input = selectedTask;
+    await updateTodo.mutateAsync(input);
+    setSelectedTask(null);
   };
 
   return (
@@ -60,8 +89,14 @@ const Home: NextPage = () => {
               {response.data.map((todo) => (
                 <div
                   key={todo.id}
-                  className="flex p-2 mt-2 w-full bg-indigo-500 rounded text-white">
+                  className={`flex p-2 mt-2 w-full rounded text-white ${
+                    todo.completed ? "bg-green-500" : "bg-indigo-500"
+                  }`}>
                   <p className="grow">{todo.title}</p>
+                  <PencilIcon
+                    className="w-6 cursor-pointer"
+                    onClick={() => handleSelect(todo.id)}
+                  />
                   <TrashIcon
                     className="w-6 cursor-pointer"
                     onClick={() => handleRemove(todo.id)}
@@ -71,6 +106,15 @@ const Home: NextPage = () => {
             </>
           )}
         </div>
+        {selectedTask && (
+          <TaskDialog
+            onSubmit={handleUpdate}
+            onChange={handleFormOnChange}
+            onDueDateChange={handleDueDate}
+            onClose={handleOnClose}
+            item={selectedTask}
+          />
+        )}
       </div>
     </div>
   );
